@@ -45,3 +45,23 @@ Route::get('/report/async/{date}', [ReportComparisonController::class, 'generate
 
 // إتمام الطلب (Producer): يضيف Job إلى Queue لتحديث المخزون
 Route::post('/orders/{order}/complete', [OrderController::class, 'completeOrder']);
+
+Route::get('/process', function () {
+    return response()->json([
+        'server_id' => env('SERVER_ID', 'unknown'),
+        'port' => request()->getPort(),
+        'timestamp' => now()->toDateTimeString(),
+    ]);
+});
+
+Route::get('/whoami', function () {
+    return response()->json([
+        'server_id' => env('SERVER_ID', 'unknown'),
+        'port' => request()->getPort()
+    ]);
+});
+
+
+Route::post('/test-complete/{id}', [OrderController::class, 'completeOrder']);
+// هذا السطر يربط الرابط بالدالة
+Route::post('/test-create-order', [OrderController::class, 'testCreateOrder']);

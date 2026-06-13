@@ -10,6 +10,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
+        api: __DIR__ . '/../routes/api.php',
         health: '/up',
     )
 
@@ -27,6 +28,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withMiddleware(function (Middleware $middleware): void {
         //
+
+        // هذا السطر يستثني الرابط المحدد من فحص التوكن الأمني
+        $middleware->validateCsrfTokens(except: [
+            'test-create-order',
+            'test-complete',
+            // أو استخدم هذا السطر بدلاً من السطرين فوق:
+            // 'test-*'
+        ]);
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {
