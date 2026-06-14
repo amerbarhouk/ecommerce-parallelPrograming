@@ -11,16 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-     Schema::create('discounts', function (Blueprint $table) {
-    $table->id();
-    $table->string('code')->unique(); // كود الخصم (مثل: SAVE20)
-    $table->enum('type', ['percentage', 'fixed']); // نوع الخصم (نسبة مئوية أو مبلغ ثابت)
-    $table->decimal('value', 8, 2); // قيمة الخصم
-    $table->boolean('is_active')->default(true); // مفعّل أو لا
-    $table->dateTime('expires_at')->nullable(); // تاريخ انتهاء الصلاحية
-    $table->timestamps();
-});
-    }       
+        Schema::create('discounts', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique(); // كود الخصم (مثل: SAVE20)
+            $table->text('description')->nullable(); // وصف الخصم
+            $table->decimal('percentage', 5, 2)->nullable(); // نسبة الخصم المئوية (مثلاً 20.00)
+            $table->decimal('fixed_amount', 10, 2)->nullable(); // مبلغ الخصم الثابت
+            $table->integer('max_uses')->nullable(); // أقصى عدد مرات استخدام
+            $table->integer('used_count')->default(0); // عدد مرات الاستخدام الفعلي
+            $table->boolean('is_active')->default(true); // مفعّل أو لا
+            $table->dateTime('expires_at')->nullable(); // تاريخ انتهاء الصلاحية
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

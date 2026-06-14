@@ -17,11 +17,15 @@ class Discount extends Model
         'fixed_amount',
         'max_uses',
         'used_count',
+        'is_active',
         'expires_at',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
+        'is_active' => 'boolean',
+        'percentage' => 'decimal:2',
+        'fixed_amount' => 'decimal:2',
     ];
 
     /**

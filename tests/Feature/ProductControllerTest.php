@@ -65,8 +65,8 @@ class ProductControllerTest extends TestCase
     {
         $response = $this->get('/unsafe/99999');
 
-        // Should handle null gracefully
-        $response->assertStatus(200);
+        // Should return 404 when product not found
+        $response->assertStatus(404);
     }
 
     /**
@@ -76,7 +76,7 @@ class ProductControllerTest extends TestCase
     {
         $response = $this->get('/safe/99999');
 
-        // Should handle error gracefully
-        $response->assertStatus(500);
+        // Should return 404 when product not found
+        $response->assertStatus(404);
     }
 }

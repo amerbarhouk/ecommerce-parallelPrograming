@@ -1,14 +1,14 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Feature;
 
 use App\Services\SalesReportService;
 use App\Models\Order;
 use App\Models\OrderItem;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class SalesReportServiceTest extends BaseTestCase
+class SalesReportServiceTest extends TestCase
 {
     use RefreshDatabase;
 

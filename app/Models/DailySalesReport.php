@@ -11,5 +11,6 @@ class DailySalesReport extends Model
         'total_orders',
         'total_items',
         'total_revenue',
+        'status',
     ];
 }

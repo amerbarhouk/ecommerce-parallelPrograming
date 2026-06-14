@@ -15,8 +15,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind اليقظة Aspect - Singleton بحيث تبقى نفس Instance
-        $this->app->singleton(JobExecutionAspect::class, function () {
+        // Bind اليقظة Aspect - transient (bind) وليس singleton
+        // لأن الـ Aspect يخزن startTime كـ state، فلو كان singleton
+        // واشتغل jobين بنفس الوقت رح يخرب الـ timing
+        $this->app->bind(JobExecutionAspect::class, function () {
             return new JobExecutionAspect();
         });
 

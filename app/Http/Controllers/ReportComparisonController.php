@@ -23,6 +23,9 @@ class ReportComparisonController extends Controller
 
         $data = $service->calculateDailySales($date);
 
+        // إضافة status = completed للتقرير المتزامن
+        $data['status'] = 'completed';
+
 
         DailySalesReport::updateOrCreate(
 

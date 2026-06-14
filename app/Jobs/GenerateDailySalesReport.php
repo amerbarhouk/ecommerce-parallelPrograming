@@ -34,10 +34,11 @@ class GenerateDailySalesReport implements ShouldQueue
                 'total_revenue' => 0,
             ];
 
-            // Batch Processing حقيقي
+            // Batch Processing حقيقي مع eager loading لتجنب N+1 queries
             $chunkSize = 500;
             $chunkIndex = 0;
             Order::whereDate('created_at', $this->date)
+                ->with('items')
                 ->chunkById($chunkSize, function ($orders) use (&$result, &$chunkIndex) {
                     $chunkIndex++;
                     $ordersCount = count($orders);
@@ -55,7 +56,7 @@ class GenerateDailySalesReport implements ShouldQueue
 
             DailySalesReport::updateOrCreate(
                 ['date' => $this->date],
-                $result
+                array_merge($result, ['status' => 'completed'])
             );
         } finally {
             //  Always execute even if error happens

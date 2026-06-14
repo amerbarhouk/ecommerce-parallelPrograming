@@ -29,12 +29,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
 
-        // هذا السطر يستثني الرابط المحدد من فحص التوكن الأمني
+        // هذا السطر يستثني الروابط المحددة من فحص التوكن الأمني
         $middleware->validateCsrfTokens(except: [
             'test-create-order',
-            'test-complete',
-            // أو استخدم هذا السطر بدلاً من السطرين فوق:
-            // 'test-*'
+            'test-complete/*',
+            'api/test-create-order',
+            'api/test-complete/*',
+            // أو استخدم هذا السطر بدلاً من السطور فوق:
+            // 'test-*',
+            // 'api/test-*'
         ]);
     })
 

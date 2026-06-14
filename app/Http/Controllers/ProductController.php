@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessOrder;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,10 +11,23 @@ use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
-    //
+    /**
+     * طريقة غير آمنة لتحديث المخزون (توضح Race Condition)
+     *
+     * ⚠️ ملاحظة: عند استخدام SQLite، لا يدعم قفل الصفوف (row-level locking)
+     * بشكل حقيقي مثل MySQL/PostgreSQL. لذلك قد لا يمنع SafeWay() أدناه
+     * Race Conditions فعلياً مع SQLite. يُنصح باستخدام MySQL أو PostgreSQL
+     * لاختبار القفل الحقيقي.
+     */
     public function unsafeWay(int $id)
     {
         $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'error' => 'Product not found'
+            ], 404);
+        }
 
         if ($product->stock > 0) {
             sleep(5);
@@ -30,6 +44,10 @@ class ProductController extends Controller
                 ->lockForUpdate()
                 ->first();
 
+            if (!$product) {
+                return null;
+            }
+
             Log::info("Before update stock: " . $product->stock);
 
             if ($product->stock > 0) {
@@ -44,6 +62,12 @@ class ProductController extends Controller
             return $product->stock;
         });
 
+        if ($result === null) {
+            return response()->json([
+                'error' => 'Product not found'
+            ], 404);
+        }
+
         return response()->json([
             'stock_after' => $result
         ]);
@@ -51,12 +75,27 @@ class ProductController extends Controller
 
     public function testQueue()
     {
-        for ($i = 1; $i <= 10; $i++) {
-            ProcessOrder::dispatch();
+        $dispatchedCount = 0;
+        $skippedCount = 0;
+
+        // جلب أوامر حقيقية من قاعدة البيانات لمعالجتها
+        $orders = Order::where('status', 'pending')->limit(10)->get();
+
+        foreach ($orders as $order) {
+            ProcessOrder::dispatch($order->id);
+            $dispatchedCount++;
+        }
+
+        // إذا لم نجد أوامر كافية، نرسل jobs تجريبية بدون orderId
+        $remaining = 10 - $dispatchedCount;
+        for ($i = 1; $i <= $remaining; $i++) {
+            ProcessOrder::dispatch(null);
+            $skippedCount++;
         }
 
         return response()->json([
-            'message' => '10 jobs dispatched'
+            'message' => "{$dispatchedCount} jobs dispatched with order IDs, {$skippedCount} jobs dispatched without order IDs",
+            'total_dispatched' => 10
         ]);
     }
 }

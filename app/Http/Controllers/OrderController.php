@@ -76,7 +76,7 @@ class OrderController extends Controller
             ]);
 
             return response()->json([
-                'message' => ($statusCode === 400) ? 'الطلب مكتول بالفعل أو غير موجود' : 'حدث خطأ في الخادم',
+                'message' => ($statusCode === 400) ? 'الطلب مكتمل بالفعل أو غير موجود' : 'حدث خطأ في الخادم',
                 'error' => $message
             ], $statusCode);
         }

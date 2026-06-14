@@ -17,7 +17,8 @@ class SalesReportService
             'total_revenue' => 0,
         ];
 
-        $orders = Order::whereDate('created_at', $date)->get();
+        // استخدام eager loading لتجنب N+1 queries
+        $orders = Order::with('items')->whereDate('created_at', $date)->get();
 
         foreach ($orders as $order) {
             $result['total_orders']++;
@@ -43,7 +44,9 @@ class SalesReportService
             'total_revenue' => 0,
         ];
 
+        // استخدام eager loading داخل chunkById لتجنب N+1 queries
         Order::whereDate('created_at', $date)
+            ->with('items')
             ->chunkById(100, function ($orders) use (&$result) {
 
                 foreach ($orders as $order) {
