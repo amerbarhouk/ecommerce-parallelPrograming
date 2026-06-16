@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProductFactory extends Factory
@@ -55,7 +56,7 @@ class ProductFactory extends Factory
             'user_id' => User::factory(),
 
             // ملاحظة: سنقوم بإنشاء Category افتراضي في الـ Seeder لضمان وجوده
-            'category_id' => 1,
+            'category_id' => Category::factory(),
         ];
     }
 }

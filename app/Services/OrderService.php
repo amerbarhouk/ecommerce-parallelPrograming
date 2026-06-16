@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Product;
+use Error;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -11,6 +13,25 @@ class OrderService
         private DistributedLockService $lockService
     ) {}
 
+    // New private method — no lock, no own transaction
+    // Called only from within placeOrder's transaction
+    private function deductStock(int $productId, int $qty): void
+    {
+        $product = Product::lockForUpdate()->find($productId);
+
+        if (!$product) {
+            throw new \Exception("Product {$productId} not found");
+        }
+
+        if ($product->stock < $qty) {
+            throw new \App\Exceptions\InsufficientStockException();
+        }
+
+        $product->stock -= $qty;
+        $product->save();
+    }
+
+    // Keep reserveStock for afterWay (standalone use with distributed lock)
     public function reserveStock(int $productId, int $qty): bool
     {
         $token = $this->lockService->lock("product:stock:{$productId}");
@@ -39,32 +60,39 @@ class OrderService
         }
     }
 
-    // app/Services/OrderService.php
-public function placeOrder(int $userId, array $items): Order
-{
-    return DB::transaction(function () use ($userId, $items) {
-        $order = Order::create([
-            'user_id' => $userId,
-            'status' => 'pending',
-            'total' => 0,
-        ]);
-
-        $total = 0;
-        foreach ($items as $item) {
-            $this->reserveStock($item['product_id'], $item['qty']); // requirement 7
-
-            $order->items()->create([
-                'product_id' => $item['product_id'],
-                'quantity'   => $item['qty'],
-                'price'      => $item['price'],
+    // Fix placeOrder to use deductStock instead of reserveStock
+    public function placeOrder(int $userId, array $items): \App\Models\Order
+    {
+        return DB::transaction(function () use ($userId, $items) {
+            $order = \App\Models\Order::create([
+                'user_id'     => $userId,
+                'status'      => 'pending',
+                'total_price' => 0,
+                'final_price' => 0,
             ]);
 
-            $total += $item['price'] * $item['qty'];
-        }
+            $total = 0;
+            foreach ($items as $item) {
+                $this->deductStock($item['product_id'], $item['qty']);
+                // simlate un error
+                // throw new Exception("unchaght error");
 
-        $order->update(['total' => $total, 'status' => 'confirmed']);
+                $order->items()->create([
+                    'product_id' => $item['product_id'],
+                    'quantity'   => $item['qty'],
+                    'price'      => $item['price'],
+                ]);
 
-        return $order;
-    }, 5);
+                $total += $item['price'] * $item['qty'];
+            }
+
+            $order->update([
+                'total_price' => $total,
+                'final_price' => $total,
+                'status'      => 'completed',
+            ]);
+
+            return $order;
+        }, 5);
     }
 }

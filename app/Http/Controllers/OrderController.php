@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Log;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use App\Services\OrderService;
+use App\Aspects\PerformanceAspect;
+use Illuminate\Support\Facades\Cache;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private OrderService $orderService,
+        private PerformanceAspect $perf
+    ) {}
     /**
      * إتمام الطلب: تحديث الحالة فورًا، ثم إضافة Jobs للصف
      * هذا هو الـ Producer الحقيقي
@@ -153,6 +160,32 @@ class OrderController extends Controller
                 'message' => 'Failed to create order',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * إنشاء طلب جديد باستخدام OrderService وتطبيق منطق AOP لقفل المخزون والتحقق من الأداء
+     */
+
+    public function store(Request $request)
+    {
+        $userId = $request->user()?->id ?? $request->input('user_id', 1);
+        $items = $request->input('items', []);
+
+        try {
+            $order = $this->perf->around('place_order', function () use ($userId, $items) {
+                return $this->orderService->placeOrder($userId, $items);
+            });
+
+            return response()->json([
+                'order'       => $order->load('items'),
+                'aop_time_ms' => Cache::get("perf:place_order:last"), // ← أضف هاد السطر بس
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to place order',
+                'error'   => $e->getMessage()
+            ], 400);
         }
     }
 }

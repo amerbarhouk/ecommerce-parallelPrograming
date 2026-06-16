@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class DistributedLockService
@@ -14,24 +14,26 @@ class DistributedLockService
         $start = microtime(true);
 
         while ((microtime(true) - $start) * 1000 < $waitMs) {
-            if (Redis::set($key, $token, 'EX', $ttl, 'NX')) {
+            // Cache::add only stores if key doesn't exist — atomic on DB cache
+            if (Cache::add($key, $token, $ttl)) {
                 return $token;
             }
-            usleep(50_000); // 50ms
+            usleep(50_000); // 50ms retry
         }
-        return null; // failed to acquire
+
+        return null; // timeout
     }
 
     public function release(string $resource, string $token): bool
     {
-        $script = <<<LUA
-        if redis.call("GET", KEYS[1]) == ARGV[1] then
-            return redis.call("DEL", KEYS[1])
-        else
-            return 0
-        end
-        LUA;
+        $key = "lock:{$resource}";
 
-        return (bool) Redis::eval($script, 1, "lock:{$resource}", $token);
+        // Only delete if we own the lock
+        if (Cache::get($key) === $token) {
+            Cache::forget($key);
+            return true;
+        }
+
+        return false;
     }
 }

@@ -22,3 +22,5 @@ Route::post('/test-create-order', [OrderController::class, 'testCreateOrder']);
 Route::post('/test-complete/{id}', [OrderController::class, 'completeOrder']);
 
 Route::post('/products/{id}/after', [ProductController::class, 'afterWay']);
+
+Route::post('/orders', [OrderController::class, 'store']);

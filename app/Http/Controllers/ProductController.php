@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\OrderService;
 use App\Aspects\PerformanceAspect;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -118,7 +119,11 @@ class ProductController extends Controller
             $this->perf->around("reserveStock:{$id}", fn() => $this->orderService->reserveStock($id, $qty));
 
             $product = Product::find($id);
-            return response()->json(['message' => 'Stock reserved successfully', 'stock_after' => $product->stock]);
+            return response()->json([
+                'message'     => 'Stock reserved successfully',
+                'stock_after' => $product->stock,
+                'aop_time_ms' => Cache::get("perf:reserveStock:{$id}:last"), // ← أضف هاد السطر بس
+            ]);
         } catch (\App\Exceptions\InsufficientStockException $e) {
             return response()->json(['error' => 'Insufficient stock'], 409);
         } catch (\App\Exceptions\OptimisticLockException $e) {
