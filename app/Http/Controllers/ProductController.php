@@ -8,14 +8,21 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\OrderService;
+use App\Aspects\PerformanceAspect;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private OrderService $orderService,
+        private PerformanceAspect $perf
+
+    ) {}
     /**
      * طريقة غير آمنة لتحديث المخزون (توضح Race Condition)
      *
      * ⚠️ ملاحظة: عند استخدام SQLite، لا يدعم قفل الصفوف (row-level locking)
-     * بشكل حقيقي مثل MySQL/PostgreSQL. لذلك قد لا يمنع SafeWay() أدناه
+     * بشكل حقيقي مثل MySQL/Postgre SQL. لذلك قد لا يمنع SafeWay() أدناه
      * Race Conditions فعلياً مع SQLite. يُنصح باستخدام MySQL أو PostgreSQL
      * لاختبار القفل الحقيقي.
      */
@@ -97,5 +104,27 @@ class ProductController extends Controller
             'message' => "{$dispatchedCount} jobs dispatched with order IDs, {$skippedCount} jobs dispatched without order IDs",
             'total_dispatched' => 10
         ]);
+    }
+
+    /**
+     * "After" endpoint — Redis distributed lock + DB pessimistic lock + optimistic version check
+     */
+
+    public function afterWay(Request $request, int $id)
+    {
+        $qty = (int) $request->input('qty', 1);
+
+        try {
+            $this->perf->around("reserveStock:{$id}", fn() => $this->orderService->reserveStock($id, $qty));
+
+            $product = Product::find($id);
+            return response()->json(['message' => 'Stock reserved successfully', 'stock_after' => $product->stock]);
+        } catch (\App\Exceptions\InsufficientStockException $e) {
+            return response()->json(['error' => 'Insufficient stock'], 409);
+        } catch (\App\Exceptions\OptimisticLockException $e) {
+            return response()->json(['error' => $e->getMessage()], 409);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
