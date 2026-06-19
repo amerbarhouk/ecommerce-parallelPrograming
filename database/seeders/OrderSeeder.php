@@ -2,18 +2,23 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Order;
+use Illuminate\Database\Seeder;
 
 class OrderSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
-        Order::factory()->count(50000)->create();
+        $total = 10000; // قللنا من 50000 لـ 10000 للأداء
+        $chunkSize = 1000;
+
+        $this->command->info("Creating {$total} orders...");
+
+        for ($i = 0; $i < $total; $i += $chunkSize) {
+            Order::factory()->count($chunkSize)->create();
+            $this->command->info("  Orders: " . min($i + $chunkSize, $total) . "/{$total}");
+        }
+
+        $this->command->info("Created {$total} orders successfully.");
     }
 }

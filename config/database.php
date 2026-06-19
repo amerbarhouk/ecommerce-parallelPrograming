@@ -57,7 +57,14 @@ return [
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'strict' => true,
+            'strict' => false,
+            'modes' => [
+                'STRICT_TRANS_TABLES',
+                'NO_ZERO_IN_DATE',
+                'NO_ZERO_DATE',
+                'ERROR_FOR_DIVISION_BY_ZERO',
+                'NO_ENGINE_SUBSTITUTION',
+            ],
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
@@ -149,8 +156,8 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
-            'persistent' => env('REDIS_PERSISTENT', false),
+            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')) . '-database-'),
+            'persistent' => env('REDIS_PERSISTENT', true),
         ],
 
         'default' => [
@@ -160,6 +167,7 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
+            'persistent' => true,
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
@@ -173,6 +181,7 @@ return [
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
+            'persistent' => true,
             'max_retries' => env('REDIS_MAX_RETRIES', 3),
             'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
             'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
