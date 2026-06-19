@@ -6,7 +6,7 @@ use App\Jobs\GenerateDailySalesReport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportComparisonController;
 use App\Http\Controllers\OrderController;
-
+use App\Http\Controllers\CachedProductController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -65,3 +65,26 @@ Route::get('/whoami', function () {
 Route::post('/test-complete/{id}', [OrderController::class, 'completeOrder']);
 // هذا السطر يربط الرابط بالدالة
 Route::post('/test-create-order', [OrderController::class, 'testCreateOrder']);
+
+
+
+// ========================================
+// Distributed Caching with Redis Routes
+// ========================================
+
+// Cache-Aside: Get product from cache (with stampede protection)
+Route::get('/cached-product/{id}', [CachedProductController::class, 'getCachedProduct']);
+
+// Get product directly from database (for performance comparison)
+Route::get('/uncached-product/{id}', [CachedProductController::class, 'getUncachedProduct']);
+
+// Unsafe: READ-MODIFY-WRITE in Redis (race condition demonstration)
+Route::get('/cached-unsafe/{id}', [CachedProductController::class, 'unsafeCachedWay']);
+
+// Safe: Atomic DECRBY operation (race-condition-safe)
+Route::get('/cached-safe/{id}', [CachedProductController::class, 'safeCachedWay']);
+
+// Cache management
+Route::get('/cache-warm/{limit?}', [CachedProductController::class, 'warmCache']);
+Route::get('/cache-clear', [CachedProductController::class, 'clearCache']);
+Route::get('/cache-stats', [CachedProductController::class, 'stats']);

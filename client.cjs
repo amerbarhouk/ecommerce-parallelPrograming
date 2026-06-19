@@ -1,226 +1,483 @@
-// client.cjs
-// Usage:
-//  node client.cjs whoami <count>              — Test Load Balancer
-//  node client.cjs create <productId> <qty>    — Create new order
-//  node client.cjs complete <count> <orderId>  — Complete order concurrently
-//  node client.cjs unsafe <count> <productId>  — Test Race Condition (no lock)
-//  node client.cjs safe <count> <productId>    — Test Pessimistic Locking
-//  node client.cjs demo                        — Run all tests in order
+#!/usr/bin/env node
+/**
+ * Ecommerce Parallel Programming - Test Client
+ *
+ * Distributed Caching with Redis Edition
+ */
 
-const axios = require('axios');
+const http = require('http');
 
-const args = process.argv.slice(2);
-const mode = args[0] || 'whoami';
-const count = parseInt(args[1], 10) || 5;
-const idParam = args[2] || '1';
-const base = process.env.BASE_URL || 'http://127.0.0.1:8080';
-const apiBase = base + '/api';
+const BASE_URL = 'http://127.0.0.1:8000';
 
-// ─── Colors ───
-const C = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  cyan: '\x1b[36m',
-  magenta: '\x1b[35m',
-  white: '\x1b[37m',
+// ========================================
+// Color helpers
+// ========================================
+const colors = {
+    reset: '\x1b[0m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+    gray: '\x1b[90m',
+    bold: '\x1b[1m',
 };
 
-function header(title) {
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`${C.bold}${C.cyan}  ${title}${C.reset}`);
-  console.log(`${'='.repeat(60)}\n`);
+function c(color, text) {
+    return `${colors[color]}${text}${colors.reset}`;
 }
 
-function sub(text) {
-  console.log(`${C.yellow}  > ${text}${C.reset}`);
+function printHeader(title) {
+    console.log('\n' + c('cyan', c('bold', '='.repeat(60))));
+    console.log(c('cyan', c('bold', `  ${title}`)));
+    console.log(c('cyan', c('bold', '='.repeat(60))));
 }
 
-// ─── 1. whoami - Test Load Balancer ───
-async function whoamiConcurrent(n) {
-  header('1. Load Balancer Test (whoami)');
-  const tasks = Array.from({ length: n }, (_, i) => i + 1).map(i =>
-    axios.get(`${base}/whoami`).then(res => ({ i, ok: true, data: res.data })).catch(err => ({ i, ok: false, error: err.message }))
-  );
-  const results = await Promise.all(tasks);
-  results.forEach(r => {
-    if (r.ok) console.log(`  Task ${r.i} -> port ${r.data.port} server_id ${r.data.server_id}`);
-    else console.error(`  Task ${r.i} -> error: ${r.error}`);
-  });
+function printSubHeader(title) {
+    console.log('\n' + c('magenta', c('bold', `- ${title}`)));
 }
 
-// ─── 2. create - Create new order ───
-async function createOrder(productId = 1, quantity = 1) {
-  header('2. Create New Order');
-  const endpoint = `${apiBase}/test-create-order`;
-  sub(`POST ${endpoint} | product_id=${productId} quantity=${quantity}`);
-  const res = await axios.post(endpoint, { product_id: productId, quantity }, {
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-    timeout: 10000
-  });
-  console.log(`  ${C.green}Order created:${C.reset}`, res.data);
-  return res.data.order_id;
+// ========================================
+// HTTP helpers
+// ========================================
+function httpGet(path) {
+    return new Promise((resolve, reject) => {
+        const start = Date.now();
+        http.get(`${BASE_URL}${path}`, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    resolve({ status: res.statusCode, data: json, ms: Date.now() - start });
+                } catch (e) {
+                    resolve({ status: res.statusCode, data: data, ms: Date.now() - start });
+                }
+            });
+        }).on('error', reject);
+    });
 }
 
-// ─── 3. complete - Complete order concurrently ───
-async function completeConcurrent(n, id) {
-  header('3. Complete Order Concurrently (Race Condition Protection)');
-  const endpoint = `${apiBase}/test-complete/${id}`;
-  sub(`Sending ${n} concurrent POST to ${endpoint}`);
-  const start = Date.now();
+function httpPost(path, body) {
+    return new Promise((resolve, reject) => {
+        const start = Date.now();
+        const postData = JSON.stringify(body);
+        const req = http.request(`${BASE_URL}${path}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    resolve({ status: res.statusCode, data: json, ms: Date.now() - start });
+                } catch (e) {
+                    resolve({ status: res.statusCode, data: data, ms: Date.now() - start });
+                }
+            });
+        });
+        req.on('error', reject);
+        req.write(postData);
+        req.end();
+    });
+}
 
-  const tasks = Array.from({ length: n }, (_, i) => i + 1).map(i =>
-    axios.post(endpoint, {}, {
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      timeout: 15000
-    })
-    .then(res => ({ i, ok: true, status: res.status, data: res.data }))
-    .catch(err => {
-      const msg = err.response ? `HTTP ${err.response.status} ${JSON.stringify(err.response.data)}` : err.message;
-      return { i, ok: false, error: msg };
-    })
-  );
+// ========================================
+// Modes
+// ========================================
 
-  const results = await Promise.all(tasks);
-  const duration = Date.now() - start;
-  let success = 0, fail = 0;
-  results.forEach(r => {
-    if (r.ok) {
-      success++;
-      console.log(`  ${C.green}Request ${r.i} -> ${r.status} ${JSON.stringify(r.data)}${C.reset}`);
-    } else {
-      fail++;
-      console.log(`  ${C.red}Request ${r.i} -> ${r.error}${C.reset}`);
+// 1. whoami
+async function modeWhoami() {
+    printHeader('WHOAMI - Server Identity Check');
+    try {
+        const res = await httpGet('/whoami');
+        console.log(c('gray', `Status: ${res.status} | Time: ${res.ms}ms`));
+        if (res.status === 200) {
+            console.log(c('green', 'OK - Server is running'));
+            console.log(`  ${JSON.stringify(res.data)}`);
+        } else {
+            console.log(c('red', 'X - Server not responding'));
+        }
+    } catch (e) {
+        console.log(c('red', `X Error: ${e.message}`));
+        console.log(c('yellow', '  Make sure server is running: php artisan serve --port=8000'));
     }
-  });
-  console.log(`\n  Result: ${duration}ms - ${C.green}Success: ${success}${C.reset}, ${C.red}Fail: ${fail}${C.reset}`);
-  sub('Only 1 should succeed, rest should fail (Race Condition protection with lock)');
 }
 
-// ─── 4. unsafe - Test Race Condition (no lock) ───
-async function unsafeConcurrent(n, productId) {
-  header('4. UNSAFE - Update Stock WITHOUT Lock (Race Condition)');
-
-  sub(`Using product #${productId}`);
-  sub(`Sending ${n} concurrent GET to ${base}/unsafe/${productId}`);
-  const start = Date.now();
-
-  const tasks = Array.from({ length: n }, (_, i) => i + 1).map(i =>
-    axios.get(`${base}/unsafe/${productId}`, { timeout: 15000 })
-    .then(res => ({ i, ok: true, data: res.data }))
-    .catch(err => {
-      const msg = err.response ? `HTTP ${err.response.status} ${JSON.stringify(err.response.data)}` : err.message;
-      return { i, ok: false, error: msg };
-    })
-  );
-
-  const results = await Promise.all(tasks);
-  const duration = Date.now() - start;
-  results.forEach(r => {
-    if (r.ok) {
-      console.log(`  Request ${r.i} -> stock=${r.data.stock}`);
-    } else {
-      console.log(`  ${C.red}Request ${r.i} -> ${r.error}${C.reset}`);
+// 2. create order
+async function modeCreate(userId, productId) {
+    printHeader(`CREATE ORDER - User ${userId}, Product ${productId}`);
+    try {
+        const res = await httpPost('/order', {
+            user_id: parseInt(userId),
+            product_id: parseInt(productId),
+            quantity: 1,
+        });
+        console.log(c('gray', `Status: ${res.status} | Time: ${res.ms}ms`));
+        if (res.status === 200 || res.status === 201) {
+            console.log(c('green', 'OK - Order created'));
+            console.log(`  ${JSON.stringify(res.data)}`);
+        } else {
+            console.log(c('red', 'X - Failed'));
+            console.log(c('yellow', `  ${JSON.stringify(res.data)}`));
+        }
+    } catch (e) {
+        console.log(c('red', `X Error: ${e.message}`));
     }
-  });
-
-  console.log(`\n  ${C.red}WARNING: Without lock, concurrent requests read the same old stock value${C.reset}`);
-  console.log(`  ${C.red}Instead of decreasing by ${n}, it may decrease less due to Race Condition${C.reset}`);
-  console.log(`  ${C.yellow}Total time: ${duration}ms (due to sleep 5s per request)${C.reset}`);
 }
 
-// ─── 5. safe - Test Pessimistic Locking ───
-async function safeConcurrent(n, productId) {
-  header('5. SAFE - Update Stock WITH Lock (Pessimistic Locking)');
-
-  sub(`Sending ${n} concurrent GET to ${base}/safe/${productId}`);
-  const start = Date.now();
-
-  const tasks = Array.from({ length: n }, (_, i) => i + 1).map(i =>
-    axios.get(`${base}/safe/${productId}`, { timeout: 30000 })
-    .then(res => ({ i, ok: true, data: res.data }))
-    .catch(err => {
-      const msg = err.response ? `HTTP ${err.response.status} ${JSON.stringify(err.response.data)}` : err.message;
-      return { i, ok: false, error: msg };
-    })
-  );
-
-  const results = await Promise.all(tasks);
-  const duration = Date.now() - start;
-  results.forEach(r => {
-    if (r.ok) {
-      console.log(`  ${C.green}Request ${r.i} -> stock_after=${r.data.stock_after}${C.reset}`);
-    } else {
-      console.log(`  ${C.red}Request ${r.i} -> ${r.error}${C.reset}`);
+// 3. complete order
+async function modeComplete(orderId) {
+    printHeader(`COMPLETE ORDER ${orderId}`);
+    try {
+        const res = await httpPost('/order/complete', {
+            order_id: parseInt(orderId),
+        });
+        console.log(c('gray', `Status: ${res.status} | Time: ${res.ms}ms`));
+        if (res.status === 200) {
+            console.log(c('green', 'OK - Order completed'));
+            console.log(`  ${JSON.stringify(res.data)}`);
+        } else {
+            console.log(c('red', 'X - Failed'));
+            console.log(c('yellow', `  ${JSON.stringify(res.data)}`));
+        }
+    } catch (e) {
+        console.log(c('red', `X Error: ${e.message}`));
     }
-  });
-
-  console.log(`\n  ${C.green}OK: With lock, each request waits for the previous one to finish${C.reset}`);
-  console.log(`  ${C.green}Stock decreases exactly ${n} times - no Race Condition${C.reset}`);
-  console.log(`  ${C.yellow}Total time: ${duration}ms (each request waits ~5s = ${n}x5s)${C.reset}`);
 }
 
-// ─── demo - Run all tests ───
-async function runDemo() {
-  console.log(`\n${C.bold}${C.magenta}${'='.repeat(60)}`);
-  console.log(`   Parallel Programming E-Commerce - Full Demo`);
-  console.log(`${'='.repeat(60)}${C.reset}`);
+// 4. DB unsafe
+async function modeUnsafe(productId, concurrent = 10) {
+    printHeader(`DB UNSAFE - Product ${productId} (${concurrent} concurrent)`);
+    console.log(c('yellow', '  Method: DB + READ-MODIFY-WRITE (Race Condition expected)\n'));
 
-  // 1. Load Balancer
-  await whoamiConcurrent(5);
-
-  // 2. Create order
-  const orderId = await createOrder(1, 2);
-
-  // 3. Complete order concurrently
-  if (orderId) {
-    await completeConcurrent(5, orderId);
-  }
-
-  // 4. Unsafe (Race Condition)
-  await unsafeConcurrent(5, 1);
-
-  // 5. Safe (Pessimistic Locking)
-  await safeConcurrent(5, 1);
-
-  // Summary
-  header('Concepts Summary');
-  console.log(`  ${C.red}UNSAFE:${C.reset}    Concurrent reads same value -> Race Condition -> Wrong data`);
-  console.log(`  ${C.green}SAFE:${C.reset}      lockForUpdate() -> each request waits -> Correct data`);
-  console.log(`  ${C.green}COMPLETE:${C.reset}  transaction + lock -> only 1 succeeds -> Double protection`);
-  console.log(`  ${C.cyan}QUEUE:${C.reset}     Long tasks run in background (async processing)`);
-  console.log(`  ${C.cyan}CHUNK:${C.reset}     Process large data in batches for better performance`);
-  console.log(`  ${C.cyan}LB:${C.reset}        Load Balancer distributes requests across 5 servers\n`);
-}
-
-// ─── Run ───
-(async () => {
-  try {
-    if (mode === 'whoami') {
-      await whoamiConcurrent(count);
-    } else if (mode === 'create') {
-      const id = await createOrder(parseInt(args[1], 10) || 1, parseInt(args[2], 10) || 1);
-      console.log(`  order id: ${id}`);
-    } else if (mode === 'complete') {
-      await completeConcurrent(count, idParam);
-    } else if (mode === 'unsafe') {
-      await unsafeConcurrent(count, parseInt(idParam, 10) || 1);
-    } else if (mode === 'safe') {
-      await safeConcurrent(count, parseInt(idParam, 10) || 1);
-    } else if (mode === 'demo') {
-      await runDemo();
-    } else {
-      console.log(`${C.bold}Available commands:${C.reset}`);
-      console.log(`  node client.cjs whoami <count>              — Test Load Balancer`);
-      console.log(`  node client.cjs create <productId> <qty>    — Create new order`);
-      console.log(`  node client.cjs complete <count> <orderId>  — Complete order concurrently`);
-      console.log(`  node client.cjs unsafe <count> <productId>  — Test Race Condition`);
-      console.log(`  node client.cjs safe <count> <productId>    — Test Pessimistic Locking`);
-      console.log(`  node client.cjs demo                        — Run all tests`);
+    const before = await httpGet(`/uncached-product/${productId}`);
+    if (before.status !== 200) {
+        console.log(c('red', `X Product ${productId} not found`));
+        return;
     }
-  } catch (err) {
-    console.error(`${C.red}Error: ${err.message}${C.reset}`);
-  }
-})();
+    const stockBefore = before.data.stock ?? before.data.data?.stock;
+    console.log(c('blue', `Stock before: ${stockBefore}`));
+
+    const promises = [];
+    for (let i = 0; i < concurrent; i++) {
+        promises.push(httpGet(`/unsafe/${productId}`));
+    }
+    const results = await Promise.all(promises);
+
+    const successCount = results.filter(r => r.status === 200).length;
+    const failCount = results.filter(r => r.status !== 200).length;
+
+    const after = await httpGet(`/uncached-product/${productId}`);
+    const stockAfter = after.data.stock ?? after.data.data?.stock;
+    console.log(c('blue', `Stock after:  ${stockAfter}`));
+    console.log(c('blue', `Expected:     ${stockBefore - successCount}`));
+    console.log();
+
+    const lost = successCount - (stockBefore - stockAfter);
+    if (lost > 0) {
+        console.log(c('red', `X RACE CONDITION! Lost ${lost} updates`));
+    } else {
+        console.log(c('green', 'OK - No race condition this time'));
+    }
+    console.log(c('gray', `  Success: ${successCount} | Failed: ${failCount}`));
+}
+
+// 5. DB safe
+async function modeSafe(productId, concurrent = 10) {
+    printHeader(`DB SAFE - Product ${productId} (${concurrent} concurrent)`);
+    console.log(c('yellow', '  Method: DB + Pessimistic Locking (Race Condition safe)\n'));
+
+    const before = await httpGet(`/uncached-product/${productId}`);
+    if (before.status !== 200) {
+        console.log(c('red', `X Product ${productId} not found`));
+        return;
+    }
+    const stockBefore = before.data.stock ?? before.data.data?.stock;
+    console.log(c('blue', `Stock before: ${stockBefore}`));
+
+    const promises = [];
+    for (let i = 0; i < concurrent; i++) {
+        promises.push(httpGet(`/safe/${productId}`));
+    }
+    const results = await Promise.all(promises);
+
+    const successCount = results.filter(r => r.status === 200).length;
+    const failCount = results.filter(r => r.status !== 200).length;
+
+    const after = await httpGet(`/uncached-product/${productId}`);
+    const stockAfter = after.data.stock ?? after.data.data?.stock;
+    console.log(c('blue', `Stock after:  ${stockAfter}`));
+    console.log(c('blue', `Expected:     ${stockBefore - successCount}`));
+    console.log();
+
+    if (stockAfter === stockBefore - successCount) {
+        console.log(c('green', 'OK SAFE - No lost updates (locking worked!)'));
+    } else {
+        console.log(c('red', 'X - Unexpected result!'));
+    }
+    console.log(c('gray', `  Success: ${successCount} | Failed: ${failCount}`));
+}
+
+// 6. cache performance test (NEW: compares SERVER time, not network time)
+async function modeCache(productId, iterations = 10) {
+    printHeader(`CACHE TEST - Product ${productId} (${iterations} iterations)`);
+    console.log(c('yellow', '  Strategy: Cache-Aside with Stampede Protection\n'));
+
+    // Clear cache first
+    await httpGet('/cache-clear');
+
+    printSubHeader('Step 1: Cold Cache (Database hit)');
+    const cold = await httpGet(`/cached-product/${productId}`);
+    console.log(c('gray', `  Network time: ${cold.ms}ms`));
+    if (cold.status === 200) {
+        console.log(c('cyan', `  Server time:  ${cold.data.total_time_ms || 'N/A'}ms`));
+        console.log(c('cyan', `  Cache status: ${cold.data.cache_status || 'N/A'}`));
+        console.log(c('yellow', '  -> First request loads from DB and caches in Redis'));
+    }
+
+    printSubHeader(`Step 2: Warm Cache (${iterations} iterations)`);
+    const warmServerTimes = [];
+    const warmNetworkTimes = [];
+    for (let i = 0; i < iterations; i++) {
+        const res = await httpGet(`/cached-product/${productId}`);
+        warmNetworkTimes.push(res.ms);
+        if (res.data && res.data.total_time_ms) {
+            warmServerTimes.push(res.data.total_time_ms);
+        }
+        process.stdout.write(c('gray', '.'));
+    }
+    console.log();
+    const avgWarmNet = (warmNetworkTimes.reduce((a, b) => a + b, 0) / warmNetworkTimes.length).toFixed(2);
+    const avgWarmSrv = warmServerTimes.length > 0
+        ? (warmServerTimes.reduce((a, b) => a + b, 0) / warmServerTimes.length).toFixed(2)
+        : 'N/A';
+    const minWarmSrv = warmServerTimes.length > 0 ? Math.min(...warmServerTimes).toFixed(2) : 'N/A';
+    const maxWarmSrv = warmServerTimes.length > 0 ? Math.max(...warmServerTimes).toFixed(2) : 'N/A';
+    console.log(c('green', `  Network avg: ${avgWarmNet}ms`));
+    console.log(c('green', `  Server avg:  ${avgWarmSrv}ms  (real cache performance!)`));
+    console.log(c('gray', `  Server min:  ${minWarmSrv}ms | max: ${maxWarmSrv}ms`));
+
+    printSubHeader(`Step 3: Direct DB (${iterations} iterations)`);
+    const dbServerTimes = [];
+    const dbNetworkTimes = [];
+    for (let i = 0; i < iterations; i++) {
+        const res = await httpGet(`/uncached-product/${productId}`);
+        dbNetworkTimes.push(res.ms);
+        if (res.data && res.data.total_time_ms) {
+            dbServerTimes.push(res.data.total_time_ms);
+        }
+    }
+    const avgDbNet = (dbNetworkTimes.reduce((a, b) => a + b, 0) / dbNetworkTimes.length).toFixed(2);
+    const avgDbSrv = dbServerTimes.length > 0
+        ? (dbServerTimes.reduce((a, b) => a + b, 0) / dbServerTimes.length).toFixed(2)
+        : 'N/A';
+    const minDbSrv = dbServerTimes.length > 0 ? Math.min(...dbServerTimes).toFixed(2) : 'N/A';
+    const maxDbSrv = dbServerTimes.length > 0 ? Math.max(...dbServerTimes).toFixed(2) : 'N/A';
+    console.log(c('blue', `  Network avg: ${avgDbNet}ms`));
+    console.log(c('blue', `  Server avg:  ${avgDbSrv}ms`));
+    console.log(c('gray', `  Server min:  ${minDbSrv}ms | max: ${maxDbSrv}ms`));
+
+    printSubHeader('Performance Comparison (Server time = real cache performance)');
+    if (avgWarmSrv !== 'N/A' && avgDbSrv !== 'N/A' && parseFloat(avgWarmSrv) > 0) {
+        const speedup = (parseFloat(avgDbSrv) / parseFloat(avgWarmSrv)).toFixed(2);
+        console.log(c('magenta', c('bold', `  >> Cache is ${speedup}x faster than DB (server-side)`)));
+        console.log(`  Cache server avg: ${c('green', avgWarmSrv + 'ms')}`);
+        console.log(`  DB server avg:    ${c('blue', avgDbSrv + 'ms')}`);
+    } else {
+        const speedup = (parseFloat(avgDbNet) / parseFloat(avgWarmNet)).toFixed(2);
+        console.log(c('magenta', c('bold', `  >> Cache is ${speedup}x faster than DB (network)`)));
+        console.log(`  Cache network avg: ${c('green', avgWarmNet + 'ms')}`);
+        console.log(`  DB network avg:    ${c('blue', avgDbNet + 'ms')}`);
+    }
+
+    printSubHeader('Cache Stats');
+    const stats = await httpGet('/cache-stats');
+    console.log(c('gray', `  ${JSON.stringify(stats.data)}`));
+}
+
+// 7. cache unsafe
+async function modeCacheUnsafe(productId, concurrent = 10) {
+    printHeader(`CACHE UNSAFE - Product ${productId} (${concurrent} concurrent)`);
+    console.log(c('yellow', '  Method: Redis + READ-MODIFY-WRITE (Race Condition in cache!)\n'));
+
+    await httpGet('/cache-warm/20');
+
+    const before = await httpGet(`/cached-product/${productId}`);
+    if (before.status !== 200) {
+        console.log(c('red', `X Product ${productId} not found`));
+        return;
+    }
+    const stockBefore = before.data.stock;
+    console.log(c('blue', `Cached stock before: ${stockBefore}`));
+
+    const promises = [];
+    for (let i = 0; i < concurrent; i++) {
+        promises.push(httpGet(`/cached-unsafe/${productId}`));
+    }
+    const results = await Promise.all(promises);
+
+    const successCount = results.filter(r => r.status === 200).length;
+    const failCount = results.filter(r => r.status !== 200).length;
+
+    const after = await httpGet(`/cached-product/${productId}`);
+    const stockAfter = after.data.stock;
+    console.log(c('blue', `Cached stock after:  ${stockAfter}`));
+    console.log(c('blue', `Expected:            ${stockBefore - successCount}`));
+    console.log();
+
+    const lost = successCount - (stockBefore - stockAfter);
+    if (lost > 0) {
+        console.log(c('red', `X RACE CONDITION! Lost ${lost} updates in Redis cache`));
+    } else {
+        console.log(c('yellow', '~ No race condition detected (try more concurrent requests)'));
+    }
+    console.log(c('gray', `  Success: ${successCount} | Failed: ${failCount}`));
+}
+
+// 8. cache safe
+async function modeCacheSafe(productId, concurrent = 10) {
+    printHeader(`CACHE SAFE - Product ${productId} (${concurrent} concurrent)`);
+    console.log(c('yellow', '  Method: Redis + ATOMIC DECRBY (Race Condition safe!)\n'));
+
+    await httpGet('/cache-warm/20');
+
+    const before = await httpGet(`/cached-product/${productId}`);
+    if (before.status !== 200) {
+        console.log(c('red', `X Product ${productId} not found`));
+        return;
+    }
+    const stockBefore = before.data.stock;
+    console.log(c('blue', `Cached stock before: ${stockBefore}`));
+
+    const promises = [];
+    for (let i = 0; i < concurrent; i++) {
+        promises.push(httpGet(`/cached-safe/${productId}`));
+    }
+    const results = await Promise.all(promises);
+
+    const successCount = results.filter(r => r.status === 200).length;
+    const failCount = results.filter(r => r.status !== 200).length;
+
+    const after = await httpGet(`/cached-product/${productId}`);
+    const stockAfter = after.data.stock;
+    console.log(c('blue', `Cached stock after:  ${stockAfter}`));
+    console.log(c('blue', `Expected:            ${stockBefore - successCount}`));
+    console.log();
+
+    if (stockAfter === stockBefore - successCount) {
+        console.log(c('green', 'OK ATOMIC - No lost updates in Redis!'));
+    } else {
+        console.log(c('red', 'X - Unexpected result!'));
+    }
+    console.log(c('gray', `  Success: ${successCount} | Failed: ${failCount}`));
+}
+
+// 9. demo
+async function modeDemo() {
+    printHeader('FULL DEMO - Parallel Programming Concepts');
+
+    await modeWhoami();
+    await sleep(500);
+
+    printSubHeader('Step 1: Cache Performance (Cache-Aside)');
+    await modeCache(1, 10);
+    await sleep(500);
+
+    printSubHeader('Step 2: Race Condition in Cache (Unsafe)');
+    await modeCacheUnsafe(2, 10);
+    await sleep(500);
+
+    printSubHeader('Step 3: Atomic Operations in Cache (Safe)');
+    await modeCacheSafe(3, 10);
+    await sleep(500);
+
+    printSubHeader('Step 4: DB Race Condition (Unsafe)');
+    await modeUnsafe(4, 10);
+    await sleep(500);
+
+    printSubHeader('Step 5: DB Pessimistic Locking (Safe)');
+    await modeSafe(5, 10);
+
+    printHeader('DEMO COMPLETE');
+    console.log(c('green', 'OK - All parallel programming concepts demonstrated!'));
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ========================================
+// Main
+// ========================================
+async function main() {
+    const [, , mode, ...args] = process.argv;
+
+    if (!mode) {
+        console.log(c('cyan', c('bold', '\nEcommerce Parallel Programming - Test Client')));
+        console.log(c('gray', 'Distributed Caching with Redis Edition\n'));
+        console.log('Usage:');
+        console.log('  node client.cjs whoami                  Test server identity');
+        console.log('  node client.cjs create <userId> <productId>   Create order');
+        console.log('  node client.cjs complete <orderId>      Complete order (triggers job)');
+        console.log('  node client.cjs unsafe <productId> [N]   DB race condition (N concurrent)');
+        console.log('  node client.cjs safe <productId> [N]     DB with locking (N concurrent)');
+        console.log('  node client.cjs cache <productId> [N]    Cache vs DB performance');
+        console.log('  node client.cjs cache-unsafe <productId> [N]  Redis race condition');
+        console.log('  node client.cjs cache-safe <productId> [N]    Redis atomic DECRBY');
+        console.log('  node client.cjs demo                     Full demo of all concepts');
+        process.exit(0);
+    }
+
+    switch (mode) {
+        case 'whoami':
+            await modeWhoami();
+            break;
+        case 'create':
+            if (args.length < 2) {
+                console.log(c('red', 'Usage: node client.cjs create <userId> <productId>'));
+                process.exit(1);
+            }
+            await modeCreate(args[0], args[1]);
+            break;
+        case 'complete':
+            if (args.length < 1) {
+                console.log(c('red', 'Usage: node client.cjs complete <orderId>'));
+                process.exit(1);
+            }
+            await modeComplete(args[0]);
+            break;
+        case 'unsafe':
+            await modeUnsafe(args[0] || 1, parseInt(args[1] || 10));
+            break;
+        case 'safe':
+            await modeSafe(args[0] || 1, parseInt(args[1] || 10));
+            break;
+        case 'cache':
+            await modeCache(args[0] || 1, parseInt(args[1] || 10));
+            break;
+        case 'cache-unsafe':
+            await modeCacheUnsafe(args[0] || 1, parseInt(args[1] || 10));
+            break;
+        case 'cache-safe':
+            await modeCacheSafe(args[0] || 1, parseInt(args[1] || 10));
+            break;
+        case 'demo':
+            await modeDemo();
+            break;
+        default:
+            console.log(c('red', `Unknown mode: ${mode}`));
+            console.log(c('gray', 'Run "node client.cjs" for usage.'));
+            process.exit(1);
+    }
+}
+
+main().catch(err => {
+    console.error(c('red', `Fatal error: ${err.message}`));
+    process.exit(1);
+});

@@ -2,45 +2,86 @@
 
 namespace App\Jobs;
 
-use App\Models\Order;
+use App\Models\Product;
+use App\Services\ProductCacheService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Job لمعالجة تحديث المخزون بشكل آمن في الخلفية
- *
- * هذا الـ Job يوضح مفهوم Asynchronous Queue + Synchronization
- */
 class UpdateStockJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $orderId) {}
+    public int $productId;
+    public int $quantity;
 
-    public function handle(): void
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(int $productId, int $quantity)
     {
-        // جلب الطلب مع العناصر
-        $order = Order::with('items')->find($this->orderId);
-        if (!$order) {
-            Log::warning("Order not found for stock update: {$this->orderId}");
-            return;
-        }
+        $this->productId = $productId;
+        $this->quantity = $quantity;
+    }
 
-        // معالجة كل عنصر في الطلب
-        foreach ($order->items as $item) {
-            // نقطة تزامن: حجز الصف لمنع التضارب
-            DB::transaction(function () use ($item) {
-                $product = $item->product()->lockForUpdate()->first();
-                if ($product && $product->stock >= $item->quantity) {
-                    $product->stock -= $item->quantity;
-                    $product->save();
-                    Log::info("Stock updated for product #{$product->id}: -{$item->quantity}");
-                } else {
-                    Log::warning("Insufficient stock for product #{$item->product_id}");
+    /**
+     * Execute the job.
+     */
+    public function handle(ProductCacheService $cacheService): void
+    {
+        Log::info("UpdateStockJob started", [
+            'product_id' => $this->productId,
+            'quantity' => $this->quantity,
+        ]);
+
+        try {
+            // Use pessimistic locking to safely update stock in DB
+            DB::transaction(function () use ($cacheService) {
+                $product = Product::where('id', $this->productId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$product) {
+                    Log::warning("Product not found in UpdateStockJob", [
+                        'product_id' => $this->productId,
+                    ]);
+                    return;
                 }
+
+                if ($product->stock < $this->quantity) {
+                    Log::warning("Insufficient stock in UpdateStockJob", [
+                        'product_id' => $this->productId,
+                        'current_stock' => $product->stock,
+                        'requested' => $this->quantity,
+                    ]);
+                    return;
+                }
+
+                $product->stock -= $this->quantity;
+                $product->save();
+
+                Log::info("Stock updated in DB", [
+                    'product_id' => $this->productId,
+                    'new_stock' => $product->stock,
+                ]);
+
+                // Invalidate cache so next read fetches fresh data
+                $cacheService->invalidateProduct($this->productId);
+
+                Log::info("Cache invalidated for product", [
+                    'product_id' => $this->productId,
+                ]);
             });
+        } catch (\Exception $e) {
+            Log::error("UpdateStockJob failed", [
+                'product_id' => $this->productId,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
         }
     }
 }
