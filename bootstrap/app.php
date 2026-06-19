@@ -35,6 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'test-complete/*',
             'api/test-create-order',
             'api/test-complete/*',
+            'order/atomic',
+            'order/*',
             // أو استخدم هذا السطر بدلاً من السطور فوق:
             // 'test-*',
             // 'api/test-*'

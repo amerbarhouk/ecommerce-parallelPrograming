@@ -155,4 +155,159 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    /**
+     * ============================================================
+     * ACID Transaction Demo (Requirement #8)
+     * ============================================================
+     *
+     * إنشاء طلب + تحديث المخزون في نفس المعاملة (Single Transaction)
+     *
+     * يضمن هذا الـ endpoint خصائص ACID الأربعة:
+     * - Atomicity:  كل شيء ينجح أو يفشل معاً (لا يوجد حالة وسطى)
+     * - Consistency: البيانات تبقى صحيحة قبل وبعد المعاملة
+     * - Isolation:   المعاملات المتزامنة لا تؤثر على بعضها (lockForUpdate)
+     * - Durability:  بعد commit، البيانات محفوظة بشكل دائم
+     *
+     * عكس الـ Saga Pattern (completeOrder + UpdateStockJob) الذي يستخدم
+     * Eventual Consistency، هذا الـ endpoint يضمن Immediate Consistency.
+     *
+     * @param Request $request
+     *   - product_id: معرف المنتج
+     *   - quantity: الكمية المطلوبة (default: 1)
+     *   - fail_after: (optional) إذا تم تمريره true، يحاك فشل بعد التحديث
+     *                 لإظهار الـ rollback
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createOrderAtomic(Request $request)
+    {
+        $productId = (int) $request->input('product_id', 1);
+        $quantity = (int) $request->input('quantity', 1);
+        $failAfter = filter_var($request->input('fail_after', false), FILTER_VALIDATE_BOOLEAN);
+
+        Log::info('ACID createOrderAtomic START', [
+            'server' => env('SERVER_ID', 'unknown'),
+            'product_id' => $productId,
+            'quantity' => $quantity,
+            'fail_after' => $failAfter,
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // ========================================
+            // STEP 1: قفل المنتج وتحقق من المخزون
+            // ========================================
+            // lockForUpdate = Pessimistic Locking داخل الـ transaction
+            // يمنع أي معاملة ثانية من تعديل نفس الصف حتى تنتهي هذه
+            $product = Product::where('id', $productId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$product) {
+                throw new \Exception("Product with ID {$productId} not found.");
+            }
+
+            $stockBefore = $product->stock;
+
+            if ($product->stock < $quantity) {
+                throw new \Exception(
+                    "Insufficient stock for product #{$productId}. Available: {$product->stock}, Requested: {$quantity}"
+                );
+            }
+
+            Log::info("ACID: Product locked", [
+                'product_id' => $productId,
+                'stock_before' => $stockBefore,
+            ]);
+
+            // ========================================
+            // STEP 2: تحديث المخزون (في نفس الـ transaction)
+            // ========================================
+            $product->stock -= $quantity;
+            $product->save();
+
+            $stockAfter = $product->stock;
+
+            Log::info("ACID: Stock updated (not committed yet)", [
+                'product_id' => $productId,
+                'stock_after' => $stockAfter,
+            ]);
+
+            // ========================================
+            // STEP 3: إنشاء الطلب (في نفس الـ transaction)
+            // ========================================
+            $order = Order::create([
+                'user_id' => 1,
+                'cart_id' => null,
+                'total_price' => $product->price * $quantity,
+                'final_price' => $product->price * $quantity,
+                'status' => 'completed',  // مكتمل فوراً لأن المخزون تحدّث
+            ]);
+
+            if (!$order) {
+                throw new \Exception("Failed to create Order.");
+            }
+
+            // ========================================
+            // STEP 4: إنشاء عناصر الطلب (في نفس الـ transaction)
+            // ========================================
+            $orderItem = OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $productId,
+                'quantity' => $quantity,
+                'price' => $product->price,
+            ]);
+
+            if (!$orderItem) {
+                throw new \Exception("Failed to create OrderItem.");
+            }
+
+            // ========================================
+            // STEP 5 (optional): محاكاة فشل لإظهار الـ rollback
+            // ========================================
+            if ($failAfter) {
+                throw new \Exception("SIMULATED FAILURE after stock update - testing ACID rollback!");
+            }
+
+            // ========================================
+            // STEP 6: Commit - كل شيء نجح → تثبيت دائم
+            // ========================================
+            DB::commit();
+
+            Log::info("ACID: Transaction COMMITTED", [
+                'order_id' => $order->id,
+                'product_id' => $productId,
+                'stock_after' => $stockAfter,
+            ]);
+
+            return response()->json([
+                'message' => 'ACID Transaction Success! Order created + stock updated atomically.',
+                'order_id' => $order->id,
+                'product_id' => $productId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockAfter,
+                'quantity' => $quantity,
+                'total_price' => $product->price * $quantity,
+                'acid_guarantee' => 'Both Order creation and Stock update succeeded together (or neither did).',
+            ], 201);
+        } catch (\Exception $e) {
+            // ========================================
+            // ROLLBACK: فشل أي خطوة → تراجع عن الكل
+            // ========================================
+            DB::rollBack();
+
+            Log::error("ACID: Transaction ROLLED BACK", [
+                'product_id' => $productId,
+                'error' => $e->getMessage(),
+                'stock_should_be' => $stockBefore ?? 'unknown (product not found)',
+            ]);
+
+            return response()->json([
+                'message' => 'ACID Transaction Failed - rolled back. No changes were made to DB.',
+                'error' => $e->getMessage(),
+                'product_id' => $productId,
+                'rollback_explanation' => 'Stock was NOT updated and Order was NOT created. ACID Atomicity preserved.',
+            ], 500);
+        }
+    }
 }

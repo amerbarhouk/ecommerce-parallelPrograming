@@ -57,7 +57,8 @@ Route::get('/process', function () {
 Route::get('/whoami', function () {
     return response()->json([
         'server_id' => env('SERVER_ID', 'unknown'),
-        'port' => request()->getPort()
+        // 'port' => request()->getPort()
+        'port' => $_SERVER['SERVER_PORT']
     ]);
 });
 
@@ -88,3 +89,11 @@ Route::get('/cached-safe/{id}', [CachedProductController::class, 'safeCachedWay'
 Route::get('/cache-warm/{limit?}', [CachedProductController::class, 'warmCache']);
 Route::get('/cache-clear', [CachedProductController::class, 'clearCache']);
 Route::get('/cache-stats', [CachedProductController::class, 'stats']);
+
+
+
+
+// ─── ACID Transaction Demo (Requirement #8) ───
+// إنشاء طلب + تحديث المخزون في نفس المعاملة (Atomic + Consistent)
+// عكس Saga Pattern، هذا الـ endpoint يضمن Immediate Consistency
+Route::post('/order/atomic', [OrderController::class, 'createOrderAtomic']);
