@@ -64,7 +64,7 @@ class ProcessOrder implements ShouldQueue
                 sleep(2);
 
                 // تحديث حالة الطلب
-                $order->update(['status' => 'processed']);
+                $order->update(['status' => 'processing']);
 
                 Log::info("Order Processed Successfully: #{$order->id}");
             } else {

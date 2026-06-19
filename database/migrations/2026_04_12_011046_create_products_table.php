@@ -34,6 +34,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(false);    // حالة التفعيل
             $table->integer('stock')->default(0);            // الكمية المتوفرة
             $table->timestamps();
+            // add 
+            $table->unsignedBigInteger('version')->default(0);
         });
     }
 
