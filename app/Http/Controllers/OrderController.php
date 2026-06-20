@@ -179,7 +179,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'order'       => $order->load('items'),
-                'aop_time_ms' => Cache::get("perf:place_order:last"), // ← أضف هاد السطر بس
+                'aop_time_ms' => Cache::get("perf:place_order:last"),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
