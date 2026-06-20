@@ -28,7 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withMiddleware(function (Middleware $middleware): void {
         //
-
+        $middleware->alias([
+            'concurrency.limit' => ConcurrencyLimit::class,
+        ]);
         // هذا السطر يستثني الروابط المحددة من فحص التوكن الأمني
         $middleware->validateCsrfTokens(except: [
             'test-create-order',

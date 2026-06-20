@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ReportComparisonController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CachedProductController;
+use App\Http\Controllers\CapacityMonitorController;
+use App\Http\Controllers\StressTestController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -97,3 +99,57 @@ Route::get('/cache-stats', [CachedProductController::class, 'stats']);
 // إنشاء طلب + تحديث المخزون في نفس المعاملة (Atomic + Consistent)
 // عكس Saga Pattern، هذا الـ endpoint يضمن Immediate Consistency
 Route::post('/order/atomic', [OrderController::class, 'createOrderAtomic']);
+
+
+
+
+
+
+
+// ============================================================
+// Capacity Monitoring - Requirement #2
+// ============================================================
+Route::get('/capacity/overview', [CapacityMonitorController::class, 'overview']);
+Route::get('/capacity/redis', [CapacityMonitorController::class, 'redisStats']);
+Route::get('/capacity/db', [CapacityMonitorController::class, 'dbStats']);
+Route::get('/capacity/queue', [CapacityMonitorController::class, 'queueStats']);
+Route::get('/capacity/limits', [CapacityMonitorController::class, 'limits']);
+Route::post('/capacity/reset-limits', [CapacityMonitorController::class, 'resetLimits']);
+
+// ============================================================
+// Apply Concurrency Limiters to existing endpoints
+// ============================================================
+// max 5 concurrent per route (since we have 5 backend instances)
+// ============================================================
+
+Route::middleware('concurrency.limit:5')->group(function () {
+    // Pessimistic Locking demo - limit concurrent
+    Route::get('/safe/{id}', [ProductController::class, 'SafeWay']);
+    Route::get('/stress/safe-fast/{id}', [\App\Http\Controllers\StressTestController::class, 'safeFast']);
+});
+
+Route::middleware('concurrency.limit:3')->group(function () {
+    // ACID transactions - limit to 3 concurrent (heavier operation)
+    Route::post('/order/atomic', [OrderController::class, 'createOrderAtomic']);
+});
+
+Route::middleware('concurrency.limit:10')->group(function () {
+    // Cache reads - allow more concurrent
+    Route::get('/cached-product/{id}', [CachedProductController::class, 'getCachedProduct']);
+});
+
+// NOTE: Unsafe endpoints don't get limiters (to demonstrate race condition clearly)
+// Route::get('/unsafe/{id}', [ProductController::class, 'unsafeWay']);
+// Route::get('/stress/unsafe-fast/{id}', [StressTestController::class, 'unsafeFast']);
+
+
+
+
+
+
+// Stress Test endpoints - Requirement #9
+Route::get('/stress/ping', [StressTestController::class, 'ping']);
+Route::get('/stress/unsafe-fast/{id}', [StressTestController::class, 'unsafeFast']);
+Route::get('/stress/safe-fast/{id}', [StressTestController::class, 'safeFast']);
+Route::get('/stress/stock/{id}', [StressTestController::class, 'stock']);
+Route::post('/stress/reset-stock/{id}', [StressTestController::class, 'resetStock']);

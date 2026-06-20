@@ -1,0 +1,256 @@
+{
+  "timestamp": "2026-06-19T16:43:38.298Z",
+  "target": "http://127.0.0.1:8080",
+  "machine": {
+    "hostname": "DESKTOP-VL1ONH9",
+    "cpus": 4,
+    "memory_gb": 8,
+    "node_version": "v22.15.1"
+  },
+  "parameters": {
+    "concurrent": 100,
+    "duration_sec": 30
+  },
+  "results": {
+    "whoami": {
+      "name": "WHOAMI - LB Distribution (Read-Only)",
+      "duration_sec": "46.56",
+      "total_requests": 267,
+      "success": 267,
+      "failures": 0,
+      "success_rate": "100.00%",
+      "rps": "5.73",
+      "avg_ms": "14483.18",
+      "p50_ms": 17070,
+      "p90_ms": 18403,
+      "p95_ms": 18656,
+      "p99_ms": 19013,
+      "max_ms": 19041,
+      "min_ms": 1253,
+      "status_codes": {
+        "200": 267
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": null,
+        "stockAfter": null,
+        "ordersCreated": 0,
+        "lostUpdates": 0
+      }
+    },
+    "cache": {
+      "name": "CACHE - Cache-Aside Read Stress",
+      "duration_sec": "47.16",
+      "total_requests": 271,
+      "success": 271,
+      "failures": 0,
+      "success_rate": "100.00%",
+      "rps": "5.75",
+      "avg_ms": "14280.34",
+      "p50_ms": 16677,
+      "p90_ms": 18314,
+      "p95_ms": 18627,
+      "p99_ms": 18829,
+      "max_ms": 18896,
+      "min_ms": 1249,
+      "status_codes": {
+        "200": 271
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": 31,
+        "stockAfter": 31,
+        "ordersCreated": 0,
+        "lostUpdates": 0
+      }
+    },
+    "safe": {
+      "name": "SAFE - DB Pessimistic Locking Stress",
+      "duration_sec": "55.99",
+      "total_requests": 105,
+      "success": 5,
+      "failures": 100,
+      "success_rate": "4.76%",
+      "rps": "1.88",
+      "avg_ms": "29433.99",
+      "p50_ms": 30119,
+      "p90_ms": 30123,
+      "p95_ms": 30123,
+      "p99_ms": 30123,
+      "max_ms": 30124,
+      "min_ms": 5735,
+      "status_codes": {
+        "0": 100,
+        "200": 5
+      },
+      "backend_distribution": [],
+      "errors": {
+        "REQUEST_TIMEOUT": 100
+      },
+      "sample_errors": [
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30111,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30111,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30112,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30112,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30113,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30112,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30112,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30113,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30113,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30114,
+          "data": "null"
+        }
+      ],
+      "data_integrity": {
+        "stockBefore": 98,
+        "stockAfter": null,
+        "ordersCreated": 0,
+        "lostUpdates": 0
+      }
+    },
+    "acid": null,
+    "mixed": {
+      "name": "MIXED - Realistic E-commerce Load",
+      "duration_sec": "30.14",
+      "total_requests": 100,
+      "success": 0,
+      "failures": 100,
+      "success_rate": "0.00%",
+      "rps": "3.32",
+      "avg_ms": "30116.27",
+      "p50_ms": 30116,
+      "p90_ms": 30119,
+      "p95_ms": 30119,
+      "p99_ms": 30119,
+      "max_ms": 30119,
+      "min_ms": 30101,
+      "status_codes": {
+        "0": 100
+      },
+      "backend_distribution": [],
+      "errors": {
+        "REQUEST_TIMEOUT": 100
+      },
+      "sample_errors": [
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30101,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30105,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30104,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30105,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "REQUEST_TIMEOUT",
+          "ms": 30116,
+          "data": "null"
+        }
+      ],
+      "data_integrity": {
+        "stockBefore": null,
+        "stockAfter": null,
+        "ordersCreated": 0,
+        "lostUpdates": 0
+      }
+    }
+  }
+}

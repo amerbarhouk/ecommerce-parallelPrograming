@@ -1,0 +1,305 @@
+{
+  "timestamp": "2026-06-20T05:33:04.669Z",
+  "target": "http://127.0.0.1:8080",
+  "machine": {
+    "hostname": "DESKTOP-VL1ONH9",
+    "cpus": 4,
+    "memory_gb": 8,
+    "node_version": "v22.15.1"
+  },
+  "parameters": {
+    "concurrent": 100,
+    "duration_sec": 30
+  },
+  "results": {
+    "ping": {
+      "name": "PING - Pure LB Throughput",
+      "duration_sec": "30.01",
+      "total_requests": 71963,
+      "success": 0,
+      "throttled": 0,
+      "failures": 71963,
+      "success_rate": "0.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "100.00%",
+      "stable_rate": "0.00%",
+      "rps": "2397.89",
+      "avg_ms": "41.67",
+      "p50_ms": 39,
+      "p90_ms": 50,
+      "p95_ms": 62,
+      "p99_ms": 80,
+      "max_ms": 181,
+      "min_ms": 11,
+      "status_codes": {
+        "0": 71963
+      },
+      "backend_distribution": [],
+      "errors": {
+        "connect ECONNREFUSED 127.0.0.1:8080": 71963
+      },
+      "sample_errors": [
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 52,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 52,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 53,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 54,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 54,
+          "data": "null"
+        }
+      ],
+      "data_integrity": {
+        "stockBefore": null,
+        "stockAfter": null,
+        "expectedWrites": 0,
+        "lostUpdates": 0
+      }
+    },
+    "whoami": {
+      "name": "WHOAMI - LB Distribution",
+      "duration_sec": "30.02",
+      "total_requests": 74134,
+      "success": 0,
+      "throttled": 0,
+      "failures": 74134,
+      "success_rate": "0.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "100.00%",
+      "stable_rate": "0.00%",
+      "rps": "2469.49",
+      "avg_ms": "40.43",
+      "p50_ms": 39,
+      "p90_ms": 45,
+      "p95_ms": 48,
+      "p99_ms": 74,
+      "max_ms": 136,
+      "min_ms": 21,
+      "status_codes": {
+        "0": 74134
+      },
+      "backend_distribution": [],
+      "errors": {
+        "connect ECONNREFUSED 127.0.0.1:8080": 74134
+      },
+      "sample_errors": [
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 64,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 64,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 64,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 65,
+          "data": "null"
+        }
+      ],
+      "data_integrity": {
+        "stockBefore": null,
+        "stockAfter": null,
+        "expectedWrites": 0,
+        "lostUpdates": 0
+      }
+    },
+    "cache": null,
+    "safe": null,
+    "acid": null,
+    "mixed": {
+      "name": "MIXED - Realistic E-commerce Load",
+      "duration_sec": "30.04",
+      "total_requests": 70880,
+      "success": 0,
+      "throttled": 0,
+      "failures": 70880,
+      "success_rate": "0.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "100.00%",
+      "stable_rate": "0.00%",
+      "rps": "2359.52",
+      "avg_ms": "42.30",
+      "p50_ms": 40,
+      "p90_ms": 48,
+      "p95_ms": 55,
+      "p99_ms": 79,
+      "max_ms": 216,
+      "min_ms": 28,
+      "status_codes": {
+        "0": 70880
+      },
+      "backend_distribution": [],
+      "errors": {
+        "connect ECONNREFUSED 127.0.0.1:8080": 70880
+      },
+      "sample_errors": [
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 50,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 48,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 35,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 34,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 35,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 33,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 33,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 33,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 33,
+          "data": "null"
+        },
+        {
+          "status": 0,
+          "error": "connect ECONNREFUSED 127.0.0.1:8080",
+          "ms": 32,
+          "data": "null"
+        }
+      ],
+      "data_integrity": {
+        "stockBefore": null,
+        "stockAfter": null,
+        "expectedWrites": 0,
+        "lostUpdates": 0
+      }
+    },
+    "overload": null
+  }
+}
