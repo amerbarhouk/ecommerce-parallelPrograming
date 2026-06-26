@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// client.cjs —
+
+
 const http = require('http');
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8080';
@@ -29,10 +32,15 @@ function printSubHeader(title) {
     console.log('\n' + c('magenta', c('bold', '- ' + title)));
 }
 
+// ====== httpGet / httpPost مع Accept: application/json ======
 function httpGet(path) {
     return new Promise((resolve, reject) => {
         const start = Date.now();
-        http.get(BASE_URL + path, (res) => {
+        const req = http.get(BASE_URL + path, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
@@ -48,7 +56,9 @@ function httpGet(path) {
                     resolve({ status: res.statusCode, data: data, ms: Date.now() - start, backendPort: null });
                 }
             });
-        }).on('error', reject);
+        });
+        req.on('error', reject);
+        req.end();
     });
 }
 
@@ -60,6 +70,7 @@ function httpPost(path, body) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Content-Length': Buffer.byteLength(postData),
             }
         }, (res) => {
@@ -98,6 +109,7 @@ async function modeWhoami() {
             }
         } else {
             console.log(c('red', 'X - Server not responding'));
+            console.log(c('yellow', '  ' + JSON.stringify(res.data)));
         }
     } catch (e) {
         console.log(c('red', 'X Error: ' + e.message));
@@ -109,7 +121,8 @@ async function modeWhoami() {
 async function modeCreate(userId, productId) {
     printHeader('CREATE ORDER - User ' + userId + ', Product ' + productId);
     try {
-        const res = await httpPost('/order', {
+        // ✅ /api/test-create-order (مش /order)
+        const res = await httpPost('/api/test-create-order', {
             user_id: parseInt(userId),
             product_id: parseInt(productId),
             quantity: 1,
@@ -130,9 +143,10 @@ async function modeCreate(userId, productId) {
 async function modeComplete(orderId) {
     printHeader('COMPLETE ORDER ' + orderId);
     try {
-        const res = await httpPost('/order/complete', {
-            order_id: parseInt(orderId),
-        });
+        // const res = await httpPost('/order/complete', {
+        //     order_id: parseInt(orderId),
+        // });
+         const res = await httpPost('/api/test-complete/' + parseInt(orderId), {});
         console.log(c('gray', 'Status: ' + res.status + ' | Time: ' + res.ms + 'ms'));
         if (res.status === 200) {
             console.log(c('green', 'OK - Order completed'));

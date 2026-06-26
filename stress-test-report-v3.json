@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-20T05:33:04.669Z",
+  "timestamp": "2026-06-21T13:08:16.807Z",
   "target": "http://127.0.0.1:8080",
   "machine": {
     "hostname": "DESKTOP-VL1ONH9",
@@ -8,98 +8,35 @@
     "node_version": "v22.15.1"
   },
   "parameters": {
-    "concurrent": 100,
-    "duration_sec": 30
+    "concurrent": 50,
+    "duration_sec": 10
   },
   "results": {
     "ping": {
       "name": "PING - Pure LB Throughput",
-      "duration_sec": "30.01",
-      "total_requests": 71963,
-      "success": 0,
+      "duration_sec": "16.91",
+      "total_requests": 118,
+      "success": 118,
       "throttled": 0,
-      "failures": 71963,
-      "success_rate": "0.00%",
+      "failures": 0,
+      "success_rate": "100.00%",
       "throttle_rate": "0.00%",
-      "failure_rate": "100.00%",
-      "stable_rate": "0.00%",
-      "rps": "2397.89",
-      "avg_ms": "41.67",
-      "p50_ms": 39,
-      "p90_ms": 50,
-      "p95_ms": 62,
-      "p99_ms": 80,
-      "max_ms": 181,
-      "min_ms": 11,
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.98",
+      "avg_ms": "5753.47",
+      "p50_ms": 6644,
+      "p90_ms": 7636,
+      "p95_ms": 7729,
+      "p99_ms": 7761,
+      "max_ms": 7804,
+      "min_ms": 694,
       "status_codes": {
-        "0": 71963
+        "200": 118
       },
       "backend_distribution": [],
-      "errors": {
-        "connect ECONNREFUSED 127.0.0.1:8080": 71963
-      },
-      "sample_errors": [
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 52,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 52,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 53,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 54,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 54,
-          "data": "null"
-        }
-      ],
+      "errors": {},
+      "sample_errors": [],
       "data_integrity": {
         "stockBefore": null,
         "stockAfter": null,
@@ -109,92 +46,29 @@
     },
     "whoami": {
       "name": "WHOAMI - LB Distribution",
-      "duration_sec": "30.02",
-      "total_requests": 74134,
-      "success": 0,
+      "duration_sec": "17.58",
+      "total_requests": 110,
+      "success": 110,
       "throttled": 0,
-      "failures": 74134,
-      "success_rate": "0.00%",
+      "failures": 0,
+      "success_rate": "100.00%",
       "throttle_rate": "0.00%",
-      "failure_rate": "100.00%",
-      "stable_rate": "0.00%",
-      "rps": "2469.49",
-      "avg_ms": "40.43",
-      "p50_ms": 39,
-      "p90_ms": 45,
-      "p95_ms": 48,
-      "p99_ms": 74,
-      "max_ms": 136,
-      "min_ms": 21,
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.26",
+      "avg_ms": "6359.00",
+      "p50_ms": 7785,
+      "p90_ms": 8224,
+      "p95_ms": 8268,
+      "p99_ms": 8331,
+      "max_ms": 8358,
+      "min_ms": 726,
       "status_codes": {
-        "0": 74134
+        "200": 110
       },
       "backend_distribution": [],
-      "errors": {
-        "connect ECONNREFUSED 127.0.0.1:8080": 74134
-      },
-      "sample_errors": [
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 64,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 64,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 64,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 65,
-          "data": "null"
-        }
-      ],
+      "errors": {},
+      "sample_errors": [],
       "data_integrity": {
         "stockBefore": null,
         "stockAfter": null,
@@ -202,97 +76,128 @@
         "lostUpdates": 0
       }
     },
-    "cache": null,
-    "safe": null,
-    "acid": null,
+    "cache": {
+      "name": "CACHE - Cache-Aside Read Stress",
+      "duration_sec": "17.76",
+      "total_requests": 113,
+      "success": 113,
+      "throttled": 0,
+      "failures": 0,
+      "success_rate": "100.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.36",
+      "avg_ms": "6142.78",
+      "p50_ms": 7399,
+      "p90_ms": 8101,
+      "p95_ms": 8359,
+      "p99_ms": 8548,
+      "max_ms": 8560,
+      "min_ms": 791,
+      "status_codes": {
+        "200": 113
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": 60,
+        "stockAfter": 60,
+        "expectedWrites": 113,
+        "lostUpdates": -113
+      }
+    },
+    "safe": {
+      "name": "SAFE - Pessimistic Locking (Fast)",
+      "duration_sec": "17.71",
+      "total_requests": 113,
+      "success": 113,
+      "throttled": 0,
+      "failures": 0,
+      "success_rate": "100.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.38",
+      "avg_ms": "6130.51",
+      "p50_ms": 7472,
+      "p90_ms": 7931,
+      "p95_ms": 7982,
+      "p99_ms": 8217,
+      "max_ms": 8288,
+      "min_ms": 686,
+      "status_codes": {
+        "200": 113
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": 0,
+        "stockAfter": 0,
+        "expectedWrites": 113,
+        "lostUpdates": -113
+      }
+    },
+    "acid": {
+      "name": "ACID - Atomic Transaction Stress",
+      "duration_sec": "18.30",
+      "total_requests": 108,
+      "success": 101,
+      "throttled": 7,
+      "failures": 0,
+      "success_rate": "93.52%",
+      "throttle_rate": "6.48%",
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "5.90",
+      "avg_ms": "6725.30",
+      "p50_ms": 8067,
+      "p90_ms": 8979,
+      "p95_ms": 9050,
+      "p99_ms": 9106,
+      "max_ms": 9247,
+      "min_ms": 790,
+      "status_codes": {
+        "201": 101,
+        "503": 7
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": 156,
+        "stockAfter": 55,
+        "expectedWrites": 101,
+        "lostUpdates": 0
+      }
+    },
     "mixed": {
       "name": "MIXED - Realistic E-commerce Load",
-      "duration_sec": "30.04",
-      "total_requests": 70880,
-      "success": 0,
+      "duration_sec": "17.38",
+      "total_requests": 116,
+      "success": 116,
       "throttled": 0,
-      "failures": 70880,
-      "success_rate": "0.00%",
+      "failures": 0,
+      "success_rate": "100.00%",
       "throttle_rate": "0.00%",
-      "failure_rate": "100.00%",
-      "stable_rate": "0.00%",
-      "rps": "2359.52",
-      "avg_ms": "42.30",
-      "p50_ms": 40,
-      "p90_ms": 48,
-      "p95_ms": 55,
-      "p99_ms": 79,
-      "max_ms": 216,
-      "min_ms": 28,
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.67",
+      "avg_ms": "5972.62",
+      "p50_ms": 6881,
+      "p90_ms": 7831,
+      "p95_ms": 7921,
+      "p99_ms": 8008,
+      "max_ms": 8087,
+      "min_ms": 789,
       "status_codes": {
-        "0": 70880
+        "200": 116
       },
       "backend_distribution": [],
-      "errors": {
-        "connect ECONNREFUSED 127.0.0.1:8080": 70880
-      },
-      "sample_errors": [
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 50,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 48,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 35,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 34,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 35,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 33,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 33,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 33,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 33,
-          "data": "null"
-        },
-        {
-          "status": 0,
-          "error": "connect ECONNREFUSED 127.0.0.1:8080",
-          "ms": 32,
-          "data": "null"
-        }
-      ],
+      "errors": {},
+      "sample_errors": [],
       "data_integrity": {
         "stockBefore": null,
         "stockAfter": null,
@@ -300,6 +205,37 @@
         "lostUpdates": 0
       }
     },
-    "overload": null
+    "overload": {
+      "name": "OVERLOAD - Push Beyond Capacity (503 expected)",
+      "duration_sec": "40.80",
+      "total_requests": 255,
+      "success": 255,
+      "throttled": 0,
+      "failures": 0,
+      "success_rate": "100.00%",
+      "throttle_rate": "0.00%",
+      "failure_rate": "0.00%",
+      "stable_rate": "100.00%",
+      "rps": "6.25",
+      "avg_ms": "20070.49",
+      "p50_ms": 21475,
+      "p90_ms": 31563,
+      "p95_ms": 32060,
+      "p99_ms": 32565,
+      "max_ms": 32595,
+      "min_ms": 813,
+      "status_codes": {
+        "200": 255
+      },
+      "backend_distribution": [],
+      "errors": {},
+      "sample_errors": [],
+      "data_integrity": {
+        "stockBefore": 0,
+        "stockAfter": 0,
+        "expectedWrites": 255,
+        "lostUpdates": -255
+      }
+    }
   }
 }

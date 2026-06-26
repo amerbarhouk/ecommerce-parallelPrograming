@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-19T16:43:38.298Z",
+  "timestamp": "2026-06-21T10:45:23.830Z",
   "target": "http://127.0.0.1:8080",
   "machine": {
     "hostname": "DESKTOP-VL1ONH9",
@@ -14,21 +14,21 @@
   "results": {
     "whoami": {
       "name": "WHOAMI - LB Distribution (Read-Only)",
-      "duration_sec": "46.56",
-      "total_requests": 267,
-      "success": 267,
+      "duration_sec": "40.85",
+      "total_requests": 375,
+      "success": 375,
       "failures": 0,
       "success_rate": "100.00%",
-      "rps": "5.73",
-      "avg_ms": "14483.18",
-      "p50_ms": 17070,
-      "p90_ms": 18403,
-      "p95_ms": 18656,
-      "p99_ms": 19013,
-      "max_ms": 19041,
-      "min_ms": 1253,
+      "rps": "9.18",
+      "avg_ms": "9431.28",
+      "p50_ms": 10559,
+      "p90_ms": 11156,
+      "p95_ms": 11263,
+      "p99_ms": 11496,
+      "max_ms": 11565,
+      "min_ms": 701,
       "status_codes": {
-        "200": 267
+        "200": 375
       },
       "backend_distribution": [],
       "errors": {},
@@ -42,47 +42,47 @@
     },
     "cache": {
       "name": "CACHE - Cache-Aside Read Stress",
-      "duration_sec": "47.16",
-      "total_requests": 271,
-      "success": 271,
+      "duration_sec": "41.12",
+      "total_requests": 353,
+      "success": 353,
       "failures": 0,
       "success_rate": "100.00%",
-      "rps": "5.75",
-      "avg_ms": "14280.34",
-      "p50_ms": 16677,
-      "p90_ms": 18314,
-      "p95_ms": 18627,
-      "p99_ms": 18829,
-      "max_ms": 18896,
-      "min_ms": 1249,
+      "rps": "8.59",
+      "avg_ms": "10059.86",
+      "p50_ms": 11301,
+      "p90_ms": 12033,
+      "p95_ms": 12125,
+      "p99_ms": 12217,
+      "max_ms": 12260,
+      "min_ms": 657,
       "status_codes": {
-        "200": 271
+        "200": 353
       },
       "backend_distribution": [],
       "errors": {},
       "sample_errors": [],
       "data_integrity": {
-        "stockBefore": 31,
-        "stockAfter": 31,
+        "stockBefore": 181,
+        "stockAfter": 181,
         "ordersCreated": 0,
         "lostUpdates": 0
       }
     },
     "safe": {
       "name": "SAFE - DB Pessimistic Locking Stress",
-      "duration_sec": "55.99",
+      "duration_sec": "55.90",
       "total_requests": 105,
       "success": 5,
       "failures": 100,
       "success_rate": "4.76%",
       "rps": "1.88",
-      "avg_ms": "29433.99",
-      "p50_ms": 30119,
-      "p90_ms": 30123,
-      "p95_ms": 30123,
-      "p99_ms": 30123,
-      "max_ms": 30124,
-      "min_ms": 5735,
+      "avg_ms": "29390.84",
+      "p50_ms": 30074,
+      "p90_ms": 30075,
+      "p95_ms": 30075,
+      "p99_ms": 30075,
+      "max_ms": 30075,
+      "min_ms": 5692,
       "status_codes": {
         "0": 100,
         "200": 5
@@ -95,66 +95,66 @@
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30111,
+          "ms": 30073,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30111,
+          "ms": 30073,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30112,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30112,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30113,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30112,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30112,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30113,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30113,
+          "ms": 30074,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30114,
+          "ms": 30074,
           "data": "null"
         }
       ],
       "data_integrity": {
-        "stockBefore": 98,
+        "stockBefore": 179,
         "stockAfter": null,
         "ordersCreated": 0,
         "lostUpdates": 0
@@ -163,19 +163,19 @@
     "acid": null,
     "mixed": {
       "name": "MIXED - Realistic E-commerce Load",
-      "duration_sec": "30.14",
+      "duration_sec": "30.11",
       "total_requests": 100,
       "success": 0,
       "failures": 100,
       "success_rate": "0.00%",
       "rps": "3.32",
-      "avg_ms": "30116.27",
-      "p50_ms": 30116,
-      "p90_ms": 30119,
-      "p95_ms": 30119,
-      "p99_ms": 30119,
-      "max_ms": 30119,
-      "min_ms": 30101,
+      "avg_ms": "30085.56",
+      "p50_ms": 30087,
+      "p90_ms": 30088,
+      "p95_ms": 30088,
+      "p99_ms": 30088,
+      "max_ms": 30088,
+      "min_ms": 30076,
       "status_codes": {
         "0": 100
       },
@@ -187,61 +187,61 @@
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30101,
+          "ms": 30076,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30105,
+          "ms": 30077,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30104,
+          "ms": 30077,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30105,
+          "ms": 30078,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30078,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30078,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30079,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30080,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30081,
           "data": "null"
         },
         {
           "status": 0,
           "error": "REQUEST_TIMEOUT",
-          "ms": 30116,
+          "ms": 30081,
           "data": "null"
         }
       ],

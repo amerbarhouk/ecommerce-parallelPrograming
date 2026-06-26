@@ -13,23 +13,23 @@ use Illuminate\Support\Facades\DB;
 class OrderController extends Controller
 {
     /**
-     * إتمام الطلب: تحديث الحالة فورًا، ثم إضافة Jobs للصف
-     * هذا هو الـ Producer الحقيقي
+     * Completing the order: update the status immediately, then add Jobs to the queue
+     * This is the real Producer
      */
     public function completeOrder(Request $request, int $orderId)
     {
         try {
-            // نقوم بلف عملية التحديث في معاملة قاعدة البيانات (Transaction)
-            // لضمان أنه لا يمكن لأحد آخر تعديل هذا الطلب أثناء قيامنا بذلك
+            // We wrap the update process in a database transaction
+            // to make sure no one else can modify this request while we're doing it
             $order = DB::transaction(function () use ($orderId) {
 
-                // 1. جلب الطلب مع قفله للتحديث (lockForUpdate)
-                // هذا يمنع "تضارب العمليات" (Race Conditions) إذا جاء طلبان لنفس الـ ID في نفس الوقت
+                // 1. Fetch the request with a lock for update (lockForUpdate)
+                // This prevents race conditions if two requests come for the same ID at the same time
                 $order = Order::with('items')->lockForUpdate()->findOrFail($orderId);
 
-                // 2. التحقق مما إذا كان الطلب مكملاً مسبقاً
+                // 2. Check if the order is already completed
                 if ($order->status === 'completed') {
-                    // نرمي استثناء لإيقاف العملية وإرجاع رسالة خطأ محددة
+                    // Throw an exception to stop the process and return a specific error message
                     throw new \Exception('Order already completed.');
                 }
 
@@ -38,34 +38,45 @@ class OrderController extends Controller
                     'order_id' => $orderId
                 ]);
 
-                // 3. تحديث حالة الطلب (Synchronous)
-                // يتم حفظ التغييرات هنا ضمن الـ Transaction
+                // 3. Update the order status (Synchronous)
+                // The changes are saved here within the Transaction
                 $order->status = 'completed';
                 $order->save();
 
                 return $order;
             });
 
-            // 4. إضافة Job لتحديث المخزون (Asynchronous Queue)
-            // نضع هذا الـ Dispatch خارج الـ Transaction مباشرة لضمان أن البيانات قد "Commit"ت
-            // وأن الـ Job سيرى الحالة الجديدة فوراً عند العمل.
-            UpdateStockJob::dispatch($order->id);
+            // 4. Adding a Job to update inventory (Asynchronous Queue)
+            // We put this Dispatch right outside the Transaction to make sure the data has "Committed"
+            // and the Job will see the new state immediately when it runs.
 
-            // (اختياري) إضافة Job لإرسال الفاتورة أو إشعار
-            // SendInvoiceJob::dispatch($order->id);
+            // UpdateStockJob::dispatch($order->id);
+            $dispatchedCount = 0;
+            foreach ($order->items as $item) {
+                UpdateStockJob::dispatch($item->product_id, $item->quantity);
+                $dispatchedCount++;
+            }
 
-            Log::info("Order #{$order->id} completed successfully. Stock update job dispatched.");
+            Log::info("Order #{$order->id} completed successfully. Stock update jobs dispatched.", [
+                'items_count' => $dispatchedCount,
+            ]);
 
             return response()->json([
-                'message' => 'تم إتمام الطلب بنجاح! سيتم تحديث المخزون في الخلفية.',
-                'order_id' => $order->id
+                'message' => 'The order has been completed successfully! The inventory will be updated in the background.',
+                'order_id' => $order->id,
+                'dispatched_jobs' => $dispatchedCount
             ]);
+
+            // (Optional) Add a Job to send the invoice or notification
+            // SendInvoiceJob::dispatch($order->id);
+
+
         } catch (\Exception $e) {
-            // معالجة الأخطاء
+            // Handling errors
             $message = $e->getMessage();
             $statusCode = 500;
 
-            // تحديد الكود المناسب إذا كان الخطأ متعلقاً بالطلب المكرر
+            // Determine the appropriate code if the error is related to a duplicate request
             if (strpos($message, 'already completed') !== false || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 $statusCode = 400;
             }
@@ -83,22 +94,22 @@ class OrderController extends Controller
     }
 
     /**
-     * دالة تجريبية لإنشاء طلب جديد
+     * Test function to create a new request
      */
     public function testCreateOrder(Request $request)
     {
-        // dd('تم الوصول للدالة بنجاح! الكود يعمل.');
-        // تسجيل بداية الطلب لنتأكد أن الدالة تستدعى أصلاً
+        // dd('Function reached successfully! The code works.');
+        // Logging the start of the request to make sure the function is actually being called
         Log::info('testCreateOrder Hit', ['request_data' => $request->all()]);
 
-        // نبدأ المعاملة يدوياً للتحكم الكامل
+        // We start the transaction manually for full control
         DB::beginTransaction();
 
         try {
             $productId = $request->input('product_id', 1);
             $quantity = (int) $request->input('quantity', 1);
 
-            // 1. التأكد من وجود المنتج (بدون findOrFail لتجنب الـ 404 المباشر ومعرفة السبب)
+            // 1. Make sure the product exists (without findOrFail to avoid a direct 404 and understand the reason)
             $product = Product::find($productId);
 
             if (!$product) {
@@ -108,8 +119,8 @@ class OrderController extends Controller
 
             $price = $product->price;
 
-            // 2. إنشاء الطلب
-            // إذا لم يعمل هذا، تأكد من $fillable في ملف Order.php
+            // 2. Create the order
+            // If this doesn't work, make sure $fillable is set in the Order.php file
             $order = Order::create([
                 'user_id' => 1,
                 'cart_id' => null,
@@ -122,7 +133,7 @@ class OrderController extends Controller
                 throw new \Exception("Failed to create Order object.");
             }
 
-            // 3. إنشاء عناصر الطلب
+            // 3. Create the order items
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $productId,
@@ -134,19 +145,19 @@ class OrderController extends Controller
                 throw new \Exception("Failed to create OrderItem object.");
             }
 
-            // وصولنا هنا يعني أن كل شيء نجاح، نقوم بتثبيت التغييرات
+            // Reaching here means everything is a success, we are applying the changes
             DB::commit();
 
             Log::info('Order Created Successfully in DB', ['order_id' => $order->id]);
 
             return response()->json(['order_id' => $order->id, 'status' => 'created'], 201);
         } catch (\Exception $e) {
-            // في حال حدث أي خطأ، نقوم بالتراجع عن كل شيء
+            // If any error occurs, we roll back everything
             DB::rollBack();
 
             Log::error('testCreateOrder Failed', [
                 'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString() // يساعد في معرفة السطر بالضبط
+                'trace' => $e->getTraceAsString() // Helps to know the exact line
             ]);
 
             return response()->json([
