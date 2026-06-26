@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
+use Illuminate\Support\Facades\Cache;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,12 +21,3 @@ use App\Http\Controllers\OrderController;
 Route::post('/test-create-order', [OrderController::class, 'testCreateOrder']);
 
 Route::post('/test-complete/{id}', [OrderController::class, 'completeOrder']);
-
-
-Route::get('/whoami', function () {
-    return response()->json([
-        'server_id' => env('SERVER_ID', 'unknown'),
-        'pid' => getmypid(),
-        'time' => now()->toDateTimeString(),
-    ]);
-});

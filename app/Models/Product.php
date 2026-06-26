@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Concerns\HasOptimisticLocking;
 
 class Product extends Model
 {
     use HasFactory; // <--- أضف هذا السطر
+    use HasOptimisticLocking;
+
     protected $fillable = [
         'ar_name',
         'name',

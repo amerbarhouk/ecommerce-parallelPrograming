@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Product;
+use App\Models\Order;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ProductControllerTest extends TestCase
@@ -50,11 +52,15 @@ class ProductControllerTest extends TestCase
      */
     public function test_queue_test_endpoint(): void
     {
+        // Seed 10 pending orders so the endpoint dispatches them with order IDs
+        Order::factory()->count(10)->create(['status' => 'pending']);
+
         $response = $this->get('/queue-test');
 
         $response->assertStatus(200);
         $response->assertJson([
-            'message' => '10 jobs dispatched'
+            'message' => '10 jobs dispatched with order IDs, 0 jobs dispatched without order IDs',
+            'total_dispatched' => 10
         ]);
     }
 
@@ -78,5 +84,34 @@ class ProductControllerTest extends TestCase
 
         // Should return 404 when product not found
         $response->assertStatus(404);
+    }
+
+    /**
+     * Test afterWay endpoint with Redis lock mocked
+     */
+    public function test_after_way_endpoint_reserves_stock_successfully(): void
+    {
+        // Mock Redis lock acquisition and release
+        Redis::shouldReceive('set')
+            ->once()
+            ->andReturn(true);
+
+        Redis::shouldReceive('eval')
+            ->once()
+            ->andReturn(true);
+
+        // Create product with stock
+        $product = Product::factory()->create(['stock' => 10]);
+
+        // POST request to reserve 2 stock units
+        $response = $this->postJson("/api/products/{$product->id}/after", ['qty' => 2]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'message' => 'Stock reserved successfully',
+            'stock_after' => 8
+        ]);
+
+        $this->assertEquals(8, $product->fresh()->stock);
     }
 }
